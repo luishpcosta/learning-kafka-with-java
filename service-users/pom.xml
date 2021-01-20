@@ -9,13 +9,21 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>service-email</artifactId>
+    <artifactId>service-users</artifactId>
     <dependencies>
         <dependency>
             <groupId>br.com.lhpc</groupId>
             <artifactId>common-kafka</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.28.0</version>
+        </dependency>
+
     </dependencies>
 
 

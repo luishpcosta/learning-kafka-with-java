@@ -8,7 +8,7 @@ public class EmailConsumer {
 
     public static void main(String[] args) {
         var emailConsumer = new EmailConsumer();
-        try (var service = new KafkaConsumerEcommerce(EmailConsumer.class.getSimpleName(),
+        try (var service = new KafkaConsumer(EmailConsumer.class.getSimpleName(),
                 "ECOMMERCE_SEND_EMAIL",
                 emailConsumer::parse,
                 String.class,

@@ -12,7 +12,7 @@ public class LogConsumer {
 
     public static void main(String[] args) {
         LogConsumer logConsumer = new LogConsumer();
-        try(var kafkaConsumer =  new KafkaConsumerEcommerce(
+        try(var kafkaConsumer =  new KafkaConsumer(
                 LogConsumer.class.getSimpleName(),
                 Pattern.compile("ECOMMERCE.*"),
                 logConsumer::parse,

@@ -1,17 +1,15 @@
 package br.com.lhpc.ecommerce;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.util.Map;
-import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 public class FraudDetectorConsumer {
 
     public static void main(String[] args) {
         var fraudDetectorConsumer = new FraudDetectorConsumer();
-        try (var service = new KafkaConsumerEcommerce<>(
+        try (var service = new KafkaConsumer<>(
                 FraudDetectorConsumer.class.getSimpleName(),
                 "ECOMMERCE_SEND_EMAIL",
                 fraudDetectorConsumer::parse,
@@ -21,26 +19,26 @@ public class FraudDetectorConsumer {
         }
     }
 
-    private void parse(ConsumerRecord<String, Order> record) {
+    private final KafkaDispatcher<Order> dispatcher = new KafkaDispatcher<>();
+
+    private void parse(ConsumerRecord<String, Order> record) throws ExecutionException, InterruptedException {
         System.out.println("----------------------------------------");
         System.out.println("Processing new order, checking for fraud");
         System.out.println("key:" + record.key() + " - value:" + record.value());
         System.out.println("Partition:" + record.partition() + " - offset:" + record.value());
+        var order = record.value();
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println("Order processed");
-    }
 
-    private static Properties properties() {
-        var properties = new Properties();
-        properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, FraudDetectorConsumer.class.getSimpleName());
-        properties.setProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "1");
-        return properties;
+        if (order.isFraud()) {
+            System.out.println("Order is a fraud");
+            dispatcher.send("ECOMMERCE_ORDER_REJECTED", order.getEmail(), order);
+        } else {
+            System.out.println("Order was accepted");
+            dispatcher.send("ECOMMERCE_ORDER_APPROVED", order.getEmail(), order);
+        }
     }
 }

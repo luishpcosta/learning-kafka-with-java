@@ -1,35 +1,36 @@
 package br.com.lhpc.ecommerce;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.io.Closeable;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
-class KafkaConsumerEcommerce<T> implements Closeable {
+class KafkaConsumer<T> implements Closeable {
 
-    private KafkaConsumer<String, T> consumer;
+    private org.apache.kafka.clients.consumer.KafkaConsumer<String, T> consumer;
     private final ConsumerFunction parse;
 
-    public KafkaConsumerEcommerce(String groupId, String topic, ConsumerFunction parse, Class<T> type, Map<String, String> properties) {
+    public KafkaConsumer(String groupId, String topic, ConsumerFunction parse, Class<T> type, Map<String, String> properties) {
         this(groupId, parse, type, properties);
         consumer.subscribe(Collections.singletonList(topic));
     }
 
-    public KafkaConsumerEcommerce(String groupId, Pattern topic, ConsumerFunction parse, Class<T> type, Map<String, String> properties) {
+    public KafkaConsumer(String groupId, Pattern topic, ConsumerFunction parse, Class<T> type, Map<String, String> properties) {
         this(groupId, parse, type, properties);
         consumer.subscribe(topic);
     }
 
-    private KafkaConsumerEcommerce(String groupId, ConsumerFunction parse, Class<T> type, Map<String, String> properties) {
+    private KafkaConsumer(String groupId, ConsumerFunction parse, Class<T> type, Map<String, String> properties) {
         this.parse = parse;
-        this.consumer = new KafkaConsumer<>(getProperties(groupId, type, properties));
+        this.consumer = new org.apache.kafka.clients.consumer.KafkaConsumer<>(getProperties(groupId, type, properties));
     }
 
     public void run() {
@@ -38,7 +39,12 @@ class KafkaConsumerEcommerce<T> implements Closeable {
             if (!records.isEmpty()) {
                 System.out.println("I found messages: " + records.count());
                 for (var record : records) {
-                    parse.consume(record);
+                    try {
+                        parse.consume(record);
+                    } catch (SQLException | ExecutionException | InterruptedException e) {
+                    // simple implementation for now, just logging
+                    e.printStackTrace();
+                }
                 }
             }
         }
